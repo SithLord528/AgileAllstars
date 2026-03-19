@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
 
-class TaskstatusConfig(AppConfig):
+class TaskStatusConfig(AppConfig):
     name = 'taskStatus'
