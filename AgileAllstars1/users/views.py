@@ -40,4 +40,19 @@ def sign_out(request):
 def sign_up(request):
     if request.method == 'GET':
         form = RegisterForm()
-        return render(request, 'users/register.html', { 'form': form})   
+        return render(request, 'users/register.html', { 'form': form})
+
+    elif request.method == 'POST':
+        form = RegisterForm(request.POST)
+
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request,f'Registration successful. Please log in.')
+                return redirect('login')
+            except Exception as e:
+                messages.error(request,f'An error occurred during registration. Please try again.')
+                return render(request, 'users/register.html', { 'form': form})
+
+        messages.error(request,f'Please correct the errors below.')
+        return render(request, 'users/register.html', { 'form': form})
