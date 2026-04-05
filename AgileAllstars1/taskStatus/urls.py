@@ -1,9 +1,13 @@
 from django.urls import path
 from . import views
-from django.urls import include
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('board/', views.task_board, name='task_board'),
-    path('update_status/<int:task_id>/<str:new_status>/', views.update_task_status, name='update_status'),
+    path('', views.project_list, name='project_list'),
+    path('project/<int:project_id>/', views.project_board, name='project_board'),
+    path('project/<int:project_id>/add-item/', views.create_item, name='create_item'),
+    path('project/<int:project_id>/add-sprint/', views.create_sprint, name='create_sprint'),
+    path('sprint/<int:sprint_id>/activate/', views.activate_sprint, name='activate_sprint'),
+    path('sprint/<int:sprint_id>/close/', views.close_sprint, name='close_sprint'),
+    path('item/<int:item_id>/move/<str:new_status>/', views.update_item_status, name='update_item_status'),
+    path('item/<int:item_id>/priority/<str:new_priority>/', views.update_item_priority, name='update_item_priority'),
 ]

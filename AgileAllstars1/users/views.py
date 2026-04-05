@@ -1,13 +1,14 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.decorators import login_required
 from .forms import LoginForm, RegisterForm
 
 def sign_in(request):
 
     if request.method == 'GET':
         if request.user.is_authenticated:
-            return redirect('posts')
+            return redirect('project_list')
         
         form = LoginForm()
         return render(request,'users/login.html', {'form': form})
@@ -22,7 +23,7 @@ def sign_in(request):
             if user:
                 login(request, user)
                 messages.success(request,f'Hi {username.title()}, welcome back!')
-                return redirect('task_board')
+                return redirect('project_list')
         
         # either form not valid or user is not authenticated
         messages.error(request,f'Invalid username or password')
@@ -30,6 +31,7 @@ def sign_in(request):
 
     
         
+@login_required
 def sign_out(request):
     logout(request)
     messages.success(request,f'You have been logged out.')
