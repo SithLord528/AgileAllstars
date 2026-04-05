@@ -1,0 +1,973 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Backlog — AgileFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Tokens ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0d0f12;
+      --surface:    #13161b;
+      --border:     #242830;
+      --border-mid: #2e333d;
+      --text:       #e2e6ed;
+      --muted:      #6b7585;
+      --accent:     #3b82f6;
+      --accent-dim: #1d3a6e;
+      --green:      #22c55e;
+      --amber:      #f59e0b;
+      --red:        #ef4444;
+      --radius:     6px;
+      --font-mono:  'IBM Plex Mono', monospace;
+      --font-sans:  'IBM Plex Sans', sans-serif;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────── */
+    .app-shell {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────── */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-logo {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+
+    .sidebar-logo span { color: var(--accent); }
+
+    .sidebar-nav {
+      padding: 12px 0;
+      flex: 1;
+    }
+
+    .nav-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 14px 24px 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 24px;
+      font-size: 13.5px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s, background 0.15s;
+      cursor: pointer;
+    }
+
+    .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .nav-item.active { color: var(--accent); background: rgba(59,130,246,0.08); border-right: 2px solid var(--accent); }
+    .nav-item svg { flex-shrink: 0; opacity: 0.7; }
+    .nav-item.active svg { opacity: 1; }
+
+    .sidebar-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    /* ── Main ────────────────────────────────────────────────── */
+    .main {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Top bar ─────────────────────────────────────────────── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .topbar-left h1 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .topbar-left p {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover { background: #2563eb; border-color: #2563eb; }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--border-mid);
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.05); border-color: #3d4553; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border-color: transparent;
+      padding: 6px 10px;
+    }
+    .btn-ghost:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--red);
+      border-color: transparent;
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.1); }
+
+    .btn-green {
+      background: rgba(34,197,94,0.12);
+      color: var(--green);
+      border-color: rgba(34,197,94,0.25);
+    }
+    .btn-green:hover { background: rgba(34,197,94,0.2); }
+
+    /* ── Flash messages ───────────────────────────────────────── */
+    .messages-wrap { padding: 12px 32px 0; }
+
+    .alert {
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      margin-bottom: 8px;
+      border: 1px solid transparent;
+    }
+
+    .alert-success { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.25); color: var(--green); }
+    .alert-error   { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); color: var(--red); }
+
+    /* ── Content area ─────────────────────────────────────────── */
+    .content { padding: 28px 32px; flex: 1; overflow-y: auto; }
+
+    /* ── Sprint banner ────────────────────────────────────────── */
+    .sprint-banner {
+      background: rgba(59,130,246,0.07);
+      border: 1px solid var(--accent-dim);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .sprint-banner-info { display: flex; align-items: center; gap: 12px; }
+    .sprint-pulse {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.25);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.25); }
+      50%       { box-shadow: 0 0 0 6px rgba(34,197,94,0.1); }
+    }
+
+    /* ── Stat chips ───────────────────────────────────────────── */
+    .stats-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 18px;
+      min-width: 120px;
+    }
+
+    .stat-chip .label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .stat-chip .value {
+      font-size: 22px;
+      font-weight: 600;
+      margin-top: 4px;
+      letter-spacing: -0.5px;
+    }
+
+    /* ── Filters ──────────────────────────────────────────────── */
+    .filters-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .filter-select {
+      background: var(--surface);
+      border: 1px solid var(--border-mid);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      padding: 7px 28px 7px 12px;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7585' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      cursor: pointer;
+    }
+
+    .filter-select:focus { outline: none; border-color: var(--accent); }
+
+    .search-input {
+      background: var(--surface);
+      border: 1px solid var(--border-mid);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      padding: 7px 14px;
+      width: 220px;
+    }
+
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { outline: none; border-color: var(--accent); }
+
+    .filters-right { margin-left: auto; }
+
+    /* ── Backlog table ────────────────────────────────────────── */
+    .backlog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .task-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .task-table thead {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .task-table th {
+      padding: 10px 16px;
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .task-table td {
+      padding: 13px 16px;
+      font-size: 13.5px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .task-table tr:last-child td { border-bottom: none; }
+
+    .task-table tbody tr {
+      transition: background 0.1s;
+    }
+    .task-table tbody tr:hover { background: rgba(255,255,255,0.025); }
+
+    /* ── Checkbox column ─────────────────────────────────────── */
+    .task-table th:first-child,
+    .task-table td:first-child {
+      width: 36px;
+      padding-left: 16px;
+      padding-right: 0;
+    }
+
+    .task-checkbox {
+      width: 15px; height: 15px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* ── Priority badge ──────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .badge-high   { background: rgba(239,68,68,0.1);   color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+    .badge-medium { background: rgba(245,158,11,0.1); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+    .badge-low    { background: rgba(107,117,133,0.15); color: var(--muted); border: 1px solid var(--border); }
+
+    .badge-todo       { background: rgba(107,117,133,0.12); color: var(--muted); border: 1px solid var(--border); }
+    .badge-inprogress { background: rgba(59,130,246,0.1);   color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
+    .badge-done       { background: rgba(34,197,94,0.1);    color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+
+    /* ── Points pill ─────────────────────────────────────────── */
+    .points-pill {
+      display: inline-block;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-mid);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── Row actions ──────────────────────────────────────────── */
+    .row-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+    .task-table tbody tr:hover .row-actions { opacity: 1; }
+
+    /* ── Empty state ─────────────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 32px;
+      color: var(--muted);
+    }
+
+    .empty-state h3 { font-size: 16px; color: var(--text); margin-bottom: 8px; }
+    .empty-state p  { font-size: 13.5px; margin-bottom: 20px; }
+
+    /* ── Modal ───────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(3px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border-mid);
+      border-radius: 10px;
+      width: 520px;
+      max-width: 95vw;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      transform: translateY(12px);
+      transition: transform 0.2s;
+    }
+
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-header h2 { font-size: 16px; font-weight: 600; }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      line-height: 1;
+      font-size: 18px;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .modal-body { padding: 20px 24px; }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Form fields ──────────────────────────────────────────── */
+    .form-group { margin-bottom: 16px; }
+
+    .form-group label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .form-control {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border-mid);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      padding: 9px 13px;
+      transition: border-color 0.15s;
+    }
+
+    .form-control:focus { outline: none; border-color: var(--accent); }
+    .form-control::placeholder { color: var(--muted); }
+
+    textarea.form-control { resize: vertical; min-height: 80px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* ── Sprint task picker ───────────────────────────────────── */
+    .sprint-task-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+    }
+
+    .sprint-task-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .sprint-task-item:last-child { border-bottom: none; }
+    .sprint-task-item:hover { background: rgba(255,255,255,0.04); }
+    .sprint-task-item label { cursor: pointer; flex: 1; }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ── Sidebar ─────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">agile<span>flow</span></div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-label">Project</div>
+
+      <a class="nav-item" href="#">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Board
+      </a>
+
+      <a class="nav-item active" href="{% url 'backlog' %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Backlog
+      </a>
+
+      <a class="nav-item" href="#">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Sprints
+      </a>
+
+      <div class="nav-label">Team</div>
+
+      <a class="nav-item" href="#">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Members
+      </a>
+
+      <a class="nav-item" href="#">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/></svg>
+        Reports
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      Logged in as <strong>{{ request.user.username }}</strong>
+    </div>
+  </aside>
+
+  <!-- ── Main area ───────────────────────────────────── -->
+  <div class="main">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Product Backlog</h1>
+        <p>{{ total_tasks }} task{{ total_tasks|pluralize }} · Not in any sprint</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-outline" onclick="openModal('sprint-modal')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Start Sprint
+        </button>
+        <button class="btn btn-primary" onclick="openModal('task-modal')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Task
+        </button>
+      </div>
+    </div>
+
+    <!-- Flash messages -->
+    {% if messages %}
+    <div class="messages-wrap">
+      {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- Active sprint banner (shown when a sprint is running) -->
+      {% if active_sprint %}
+      <div class="sprint-banner">
+        <div class="sprint-banner-info">
+          <div class="sprint-pulse"></div>
+          <div>
+            <strong>{{ active_sprint.name }}</strong> is active
+            <span style="color:var(--muted); font-size:13px; margin-left:8px;">
+              {{ active_sprint.end_date|timeuntil }} remaining
+            </span>
+          </div>
+        </div>
+        <a href="#" class="btn btn-outline" style="font-size:12px; padding:6px 12px;">View Board →</a>
+      </div>
+      {% endif %}
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-chip">
+          <div class="label">Total Tasks</div>
+          <div class="value">{{ total_tasks }}</div>
+        </div>
+        <div class="stat-chip">
+          <div class="label">High Priority</div>
+          <div class="value" style="color:var(--red)">
+            {% with tasks|length as n %}
+            {# TODO: tasks|filter_priority:"High"|length once DB connected #}
+            —
+            {% endwith %}
+          </div>
+        </div>
+        <div class="stat-chip">
+          <div class="label">Story Points</div>
+          <div class="value" style="color:var(--accent)">
+            {# TODO: tasks|sum_points once DB connected #}
+            —
+          </div>
+        </div>
+        <div class="stat-chip">
+          <div class="label">In Progress</div>
+          <div class="value" style="color:var(--amber)">—</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters-row">
+        <input class="search-input" type="text" placeholder="Search tasks…" id="searchInput" oninput="filterTasks()" />
+
+        <select class="filter-select" id="priorityFilter" onchange="filterTasks()">
+          <option value="">All priorities</option>
+          {% for p in priority_choices %}
+          <option value="{{ p }}">{{ p }}</option>
+          {% endfor %}
+        </select>
+
+        <select class="filter-select" id="statusFilter" onchange="filterTasks()">
+          <option value="">All statuses</option>
+          {% for s in status_choices %}
+          <option value="{{ s }}">{{ s }}</option>
+          {% endfor %}
+        </select>
+
+        <div class="filters-right">
+          <span style="font-size:12.5px; color:var(--muted);" id="taskCount">{{ total_tasks }} tasks</span>
+        </div>
+      </div>
+
+      <!-- Backlog table -->
+      <div class="backlog-header">
+        <span class="section-title">Backlog</span>
+        <button class="btn btn-ghost" style="font-size:12px;" onclick="selectAll()">Select all</button>
+      </div>
+
+      {% if tasks %}
+      <table class="task-table" id="taskTable">
+        <thead>
+          <tr>
+            <th><input type="checkbox" class="task-checkbox" id="selectAllCheck" onchange="toggleAll(this)"></th>
+            <th>Title</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Points</th>
+            <th>Assignee</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="taskBody">
+          {% for task in tasks %}
+          <tr data-title="{{ task.title|lower }}"
+              data-priority="{{ task.priority }}"
+              data-status="{{ task.status }}">
+
+            <td>
+              <input type="checkbox" class="task-checkbox row-check" value="{{ task.id }}">
+            </td>
+
+            <td>
+              <div style="font-weight:500;">{{ task.title }}</div>
+              {% if task.description %}
+              <div style="font-size:12px; color:var(--muted); margin-top:2px;">{{ task.description|truncatechars:70 }}</div>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if task.priority == "High" %}
+                <span class="badge badge-high">▲ High</span>
+              {% elif task.priority == "Medium" %}
+                <span class="badge badge-medium">● Medium</span>
+              {% else %}
+                <span class="badge badge-low">▽ Low</span>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if task.status == "In Progress" %}
+                <span class="badge badge-inprogress">In Progress</span>
+              {% elif task.status == "Done" %}
+                <span class="badge badge-done">Done</span>
+              {% else %}
+                <span class="badge badge-todo">To Do</span>
+              {% endif %}
+            </td>
+
+            <td><span class="points-pill">{{ task.story_points }} pts</span></td>
+
+            <td style="font-size:13px; color:var(--muted);">{{ task.assignee }}</td>
+
+            <td>
+              <div class="row-actions">
+                <button class="btn btn-ghost" style="font-size:12px; padding:5px 10px;" title="Edit task">Edit</button>
+                <form method="post" action="{% url 'delete_task' task.id %}" style="display:inline;"
+                      onsubmit="return confirm('Delete this task?')">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger" title="Delete task">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% else %}
+      <div class="empty-state">
+        <h3>Your backlog is empty</h3>
+        <p>Add your first task to start planning your project.</p>
+        <button class="btn btn-primary" onclick="openModal('task-modal')">+ Add First Task</button>
+      </div>
+      {% endif %}
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app-shell -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL: Add Task
+════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title">
+    <div class="modal-header">
+      <h2 id="task-modal-title">New Task</h2>
+      <button class="modal-close" onclick="closeModal('task-modal')" aria-label="Close">✕</button>
+    </div>
+
+    <form method="post" action="{% url 'add_task' %}">
+      {% csrf_token %}
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="task-title">Title *</label>
+          <input class="form-control" type="text" id="task-title" name="title"
+                 placeholder="e.g. Implement user authentication" required>
+        </div>
+
+        <div class="form-group">
+          <label for="task-desc">Description</label>
+          <textarea class="form-control" id="task-desc" name="description"
+                    placeholder="What needs to be done?"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-priority">Priority</label>
+            <select class="form-control" id="task-priority" name="priority">
+              {% for p in priority_choices %}
+              <option value="{{ p }}" {% if p == "Medium" %}selected{% endif %}>{{ p }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="task-points">Story Points</label>
+            <input class="form-control" type="number" id="task-points" name="story_points"
+                   min="0" max="100" value="1">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="task-assignee">Assignee</label>
+          <input class="form-control" type="text" id="task-assignee" name="assignee"
+                 placeholder="Username or name">
+          {# TODO: Replace with <select> populated from User.objects.all() #}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('task-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Task</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL: Start Sprint
+════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="sprint-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sprint-modal-title">
+    <div class="modal-header">
+      <h2 id="sprint-modal-title">Start New Sprint</h2>
+      <button class="modal-close" onclick="closeModal('sprint-modal')" aria-label="Close">✕</button>
+    </div>
+
+    <form method="post" action="{% url 'start_sprint' %}">
+      {% csrf_token %}
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="sprint-name">Sprint Name *</label>
+          <input class="form-control" type="text" id="sprint-name" name="sprint_name"
+                 placeholder="e.g. Sprint 1" required>
+        </div>
+
+        <div class="form-group">
+          <label for="sprint-goal">Sprint Goal</label>
+          <textarea class="form-control" id="sprint-goal" name="sprint_goal"
+                    placeholder="What do you want to achieve in this sprint?"
+                    style="min-height:60px;"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sprint-duration">Duration</label>
+            <select class="form-control" id="sprint-duration" name="duration">
+              <option value="1">1 week</option>
+              <option value="2" selected>2 weeks</option>
+              <option value="3">3 weeks</option>
+              <option value="4">4 weeks</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Start Date</label>
+            <input class="form-control" type="date" name="start_date">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Add Tasks to Sprint</label>
+          <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">
+            Select backlog items to include in this sprint.
+          </p>
+          <div class="sprint-task-list">
+            {% for task in tasks %}
+            <div class="sprint-task-item">
+              <input type="checkbox" class="task-checkbox" name="task_ids" value="{{ task.id }}" id="st-{{ task.id }}">
+              <label for="st-{{ task.id }}">
+                {{ task.title }}
+                <span style="color:var(--muted); font-size:12px; margin-left:6px;">· {{ task.story_points }} pts</span>
+              </label>
+            </div>
+            {% empty %}
+            <div style="padding:14px; color:var(--muted); font-size:13px; text-align:center;">
+              No backlog tasks available.
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('sprint-modal')">Cancel</button>
+        <button type="submit" class="btn btn-green">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Start Sprint
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<script>
+  // ── Modal helpers ───────────────────────────────────────────
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Close on backdrop click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) closeModal(overlay.id);
+    });
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id));
+    }
+  });
+
+  // ── Client-side filtering ──────────────────────────────────
+  function filterTasks() {
+    const search   = document.getElementById('searchInput').value.toLowerCase();
+    const priority = document.getElementById('priorityFilter').value;
+    const status   = document.getElementById('statusFilter').value;
+    const rows     = document.querySelectorAll('#taskBody tr');
+    let visible    = 0;
+
+    rows.forEach(row => {
+      const titleMatch    = row.dataset.title.includes(search);
+      const priorityMatch = !priority || row.dataset.priority === priority;
+      const statusMatch   = !status   || row.dataset.status   === status;
+
+      const show = titleMatch && priorityMatch && statusMatch;
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    document.getElementById('taskCount').textContent = `${visible} task${visible !== 1 ? 's' : ''}`;
+  }
+
+  // ── Checkbox helpers ───────────────────────────────────────
+  function toggleAll(masterCheck) {
+    document.querySelectorAll('.row-check').forEach(cb => {
+      cb.checked = masterCheck.checked;
+    });
+  }
+
+  function selectAll() {
+    const allCheck = document.getElementById('selectAllCheck');
+    allCheck.checked = true;
+    toggleAll(allCheck);
+  }
+
+  // Auto-dismiss flash messages
+  setTimeout(() => {
+    document.querySelectorAll('.alert').forEach(a => a.style.opacity = '0');
+  }, 4000);
+</script>
+
+</body>
+</html>

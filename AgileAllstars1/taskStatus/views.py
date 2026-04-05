@@ -14,7 +14,7 @@ MOCK_TASKS = [
 ]
 
 
-@login_required
+#@login_required
 def backlog(request):
     """
     Display the product backlog.
@@ -33,7 +33,7 @@ def backlog(request):
     return render(request, "backlog.html", context)
  
  
-@login_required
+#@login_required
 def add_task(request):
     """
     Handle new task creation via POST.
@@ -71,7 +71,7 @@ def add_task(request):
     return redirect("backlog")
  
  
-@login_required
+#@login_required
 def start_sprint(request):
     """
     Handle sprint creation via POST.
@@ -106,7 +106,7 @@ def start_sprint(request):
     return redirect("backlog")
  
  
-@login_required
+#@login_required
 def delete_task(request, task_id):
     """
     Handle task deletion.
