@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Move Task — AgileAllstars{% endblock %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 40px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <h2 style="margin-top: 0; color: #172b4d;">Move Task</h2>
+
+    <p style="color: #5e6c84; font-size: 1.1rem; margin-bottom: 20px;">
+        You are moving <strong>"{{ item.title }}"</strong>
+        from <strong>{{ item.get_status_display }}</strong>
+        to <strong>{{ new_status_display }}</strong>.
+    </p>
+
+    <form method="POST">
+        {% csrf_token %}
+        <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #172b4d;">Reason for moving (Optional)</label>
+        <textarea name="comment" rows="4" placeholder="e.g., Print failed QA, sending back to sprint for rework..." style="width: 100%; padding: 10px; border: 1px solid #dfe1e6; border-radius: 4px; box-sizing: border-box; margin-bottom: 20px; font-family: inherit;"></textarea>
+
+        <div style="display: flex; gap: 10px;">
+            <button type="submit" style="background-color: #0052cc; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">Confirm Move</button>
+            <a href="{% url 'project_board' item.project.id %}" style="text-decoration: none; background-color: #ebecf0; color: #42526e; padding: 10px 15px; border-radius: 4px; font-weight: bold; display: inline-block;">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

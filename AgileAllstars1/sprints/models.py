@@ -47,12 +47,19 @@ class Project(models.Model):
             return 0
         return round(counts.get('DONE', 0) / total * 100, 1)
 
-    collaborators = models.ManyToManyField(
-        User, 
-        related_name='shared_projects', 
+    collaborator_ids = models.JSONField(
+        default=list, 
         blank=True,
-        help_text="Users invited to work on this project"
+        help_text="List of auth.User.id integers"
     )
+
+    @property
+    def collaborators(self):
+        """Resolve the collaborator Users from the auth database."""
+        from django.contrib.auth.models import User
+        if not self.collaborator_ids:
+            return User.objects.none()
+        return User.objects.using('default').filter(id__in=self.collaborator_ids)
 
 
 class Sprint(models.Model):

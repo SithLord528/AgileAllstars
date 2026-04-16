@@ -96,7 +96,6 @@
     }
     .task-card:hover { background-color: #f9f9fa; }
     .task-card.done { opacity: 0.6; }
-    .task-card strong { display: block; margin-bottom: 4px; }
     .task-card .desc {
         font-size: 0.8rem; color: #5e6c84; margin: 4px 0;
     }
@@ -119,12 +118,11 @@
     }
     .actions.split { display: flex; justify-content: space-between; }
     .action-link {
-        background: none; border: none; cursor: pointer;
-        font-size: 0.85rem; padding: 0;
+        font-size: 0.85rem; padding: 0; text-decoration: none; font-weight: 600;
     }
     .action-link.forward { color: #0052cc; }
     .action-link.back    { color: #6b778c; }
-    .action-link.pass    { color: #36b37e; font-weight: bold; }
+    .action-link.pass    { color: #36b37e; }
     .action-link.fail    { color: #ff5630; }
 
     .empty-text {
@@ -141,6 +139,13 @@
         <div class="progress-bar" style="width: {{ completion }}%"></div>
     </div>
     <span class="progress-label">{{ completion }}% complete</span>
+    
+    {% if request.user.id == project.owner_id %}
+    <form method="POST" action="{% url 'delete_project' project.id %}" style="margin-left: auto;" onsubmit="return confirm('Are you sure you want to delete this entire project? This cannot be undone!');">
+        {% csrf_token %}
+        <button type="submit" style="background-color: #de350b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.8rem;">Delete Project</button>
+    </form>
+    {% endif %}
 </div>
 
 <div class="sprint-panel">
@@ -228,15 +233,23 @@
         {% for item in backlog_items %}
         <div class="task-card">
             <span class="priority priority-{{ item.priority }}">{{ item.get_priority_display }}</span>
-            <strong>{{ item.title }}</strong>
+            
+            <a href="{% url 'item_detail' item.id %}" style="display: block; color: #172b4d; text-decoration: none; margin-bottom: 4px; font-weight: bold;">
+                {{ item.title }}
+            </a>
+            
+            {% if item.assigned_to %}
+                <div style="font-size: 0.75rem; background: #dfe1e6; color: #172b4d; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-bottom: 4px;">
+                    👤 {{ item.assigned_to.username }}
+                </div>
+            {% endif %}
+
             {% if item.description %}<p class="desc">{{ item.description|truncatewords:15 }}</p>{% endif %}
             <small>Created: {{ item.created_at|date:"M d" }}</small>
+            
             {% if active_sprint %}
             <div class="actions">
-                <form method="POST" action="{% url 'update_item_status' item.id 'SPRINT' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="action-link forward">Move to Sprint &rarr;</button>
-                </form>
+                <a href="{% url 'update_item_status' item.id 'SPRINT' %}" class="action-link forward" style="text-decoration: none;">Move to Sprint &rarr;</a>
             </div>
             {% else %}
             <div class="actions"><small style="color:#6b778c;">No active sprint</small></div>
@@ -252,18 +265,23 @@
         {% for item in sprint_items %}
         <div class="task-card">
             <span class="priority priority-{{ item.priority }}">{{ item.get_priority_display }}</span>
-            <strong>{{ item.title }}</strong>
+            
+            <a href="{% url 'item_detail' item.id %}" style="display: block; color: #172b4d; text-decoration: none; margin-bottom: 4px; font-weight: bold;">
+                {{ item.title }}
+            </a>
+            
+            {% if item.assigned_to %}
+                <div style="font-size: 0.75rem; background: #dfe1e6; color: #172b4d; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-bottom: 4px;">
+                    👤 {{ item.assigned_to.username }}
+                </div>
+            {% endif %}
+
             {% if item.description %}<p class="desc">{{ item.description|truncatewords:15 }}</p>{% endif %}
             <small>Updated: {{ item.updated_at|date:"M d" }}</small>
+            
             <div class="actions split">
-                <form method="POST" action="{% url 'update_item_status' item.id 'BACKLOG' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="action-link back">&larr; Backlog</button>
-                </form>
-                <form method="POST" action="{% url 'update_item_status' item.id 'TEST' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="action-link forward">Ready for Test &rarr;</button>
-                </form>
+                <a href="{% url 'update_item_status' item.id 'BACKLOG' %}" class="action-link back" style="text-decoration: none;">&larr; Backlog</a>
+                <a href="{% url 'update_item_status' item.id 'TEST' %}" class="action-link forward" style="text-decoration: none;">Ready for Test &rarr;</a>
             </div>
         </div>
         {% empty %}
@@ -276,16 +294,20 @@
         {% for item in test_items %}
         <div class="task-card">
             <span class="priority priority-{{ item.priority }}">{{ item.get_priority_display }}</span>
-            <strong>{{ item.title }}</strong>
+            
+            <a href="{% url 'item_detail' item.id %}" style="display: block; color: #172b4d; text-decoration: none; margin-bottom: 4px; font-weight: bold;">
+                {{ item.title }}
+            </a>
+            
+            {% if item.assigned_to %}
+                <div style="font-size: 0.75rem; background: #dfe1e6; color: #172b4d; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-bottom: 4px;">
+                    👤 {{ item.assigned_to.username }}
+                </div>
+            {% endif %}
+
             <div class="actions split">
-                <form method="POST" action="{% url 'update_item_status' item.id 'SPRINT' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="action-link fail">&larr; Fail</button>
-                </form>
-                <form method="POST" action="{% url 'update_item_status' item.id 'DONE' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="action-link pass">Pass &#10003;</button>
-                </form>
+                <a href="{% url 'update_item_status' item.id 'SPRINT' %}" class="action-link fail" style="text-decoration: none;">&larr; Fail</a>
+                <a href="{% url 'update_item_status' item.id 'DONE' %}" class="action-link pass" style="text-decoration: none;">Pass &#10003;</a>
             </div>
         </div>
         {% empty %}
@@ -298,7 +320,17 @@
         {% for item in complete_items %}
         <div class="task-card done">
             <span class="priority priority-{{ item.priority }}">{{ item.get_priority_display }}</span>
-            <strong>{{ item.title }}</strong>
+            
+            <a href="{% url 'item_detail' item.id %}" style="display: block; color: #172b4d; text-decoration: none; margin-bottom: 4px; font-weight: bold;">
+                {{ item.title }}
+            </a>
+            
+            {% if item.assigned_to %}
+                <div style="font-size: 0.75rem; background: #dfe1e6; color: #172b4d; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-bottom: 4px;">
+                    👤 {{ item.assigned_to.username }}
+                </div>
+            {% endif %}
+
             <small>Ready for release</small>
         </div>
         {% empty %}

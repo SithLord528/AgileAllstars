@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from sprints.models import Project, Sprint, BacklogItem
+from sprints.models import Project, Sprint, BacklogItem, StageComment
 from .forms import ProjectForm, SprintForm, BacklogItemForm
+from django.contrib.auth.models import User
 
 
 @login_required
@@ -100,7 +101,9 @@ def close_sprint(request, sprint_id):
 @login_required
 def update_item_status(request, item_id, new_status):
     item = get_object_or_404(BacklogItem, id=item_id)
+    
     if request.method == 'POST':
+        # --- Your existing safety checks ---
         if not item.can_transition_to(new_status):
             messages.error(request, 'Invalid status transition.')
             return redirect('project_board', project_id=item.project_id)
@@ -112,9 +115,29 @@ def update_item_status(request, item_id, new_status):
                 return redirect('project_board', project_id=item.project_id)
             item.sprint = active_sprint
 
+        # --- NEW: The Comment Logic ---
+        comment_body = request.POST.get('comment', '').strip()
+        if comment_body:
+            StageComment.objects.create(
+                item=item,
+                author_id=request.user.id,
+                from_stage=item.status,
+                to_stage=new_status,
+                body=comment_body
+            )
+
+        # Update and save
         item.status = new_status
         item.save()
-    return redirect('project_board', project_id=item.project_id)
+        return redirect('project_board', project_id=item.project_id)
+
+    # --- NEW: If they just click the link, show the comment page ---
+    context = {
+        'item': item,
+        'new_status': new_status,
+        'new_status_display': dict(BacklogItem.Status.choices).get(new_status, new_status)
+    }
+    return render(request, 'taskStatus/transition_item.html', context)
 
 
 @login_required
@@ -126,3 +149,99 @@ def update_item_priority(request, item_id, new_priority):
             item.priority = new_priority
             item.save()
     return redirect('project_board', project_id=item.project_id)
+
+
+def invite_collaborator(request, project_id):
+    # Grab the specific project we are inviting someone to
+    project = get_object_or_404(Project, id=project_id)
+    
+    # Optional Security: Ensure only the creator can invite people
+    if request.user.id != project.owner_id:
+        messages.error(request, "Only the project owner can invite collaborators.")
+        return redirect('project_board', project_id=project.id) 
+
+    if request.method == 'POST':
+        # Grab the email the user typed into the form
+        email = request.POST.get('email')
+        
+        try:
+            # 1. Search the database for a user with this exact email
+            user_to_invite = User.objects.get(email=email)
+            
+            # 2. Add them to the ManyToMany 'collaborators' list we made earlier
+            if user_to_invite.id not in project.collaborator_ids:
+                project.collaborator_ids.append(user_to_invite.id)
+                project.save()  
+
+            # 3. Send a success message to the UI
+            messages.success(request, f"Successfully added {user_to_invite.username} to the project!")
+            
+        except User.DoesNotExist:
+            # If the database can't find the email, catch the crash and show an error
+            messages.error(request, "No user found with that email address.")
+            
+    # Bounce them right back to the project page 
+    # (Make sure 'project_board' matches the name= you gave your project URL!)
+    return redirect('project_board', project_id=project.id)
+
+
+
+@login_required
+def item_detail(request, item_id):
+    item = get_object_or_404(BacklogItem, id=item_id)
+    project = item.project
+    
+    # 1. Get all the transition comments for this specific item
+    comments = item.transition_comments.all()
+
+    # 2. Gather the allowed assignees (the project owner + any invited collaborators)
+    valid_assignees = list(project.collaborators)
+    if project.owner and project.owner not in valid_assignees:
+        valid_assignees.insert(0, project.owner)
+
+    # 3. Handle the form submission when you pick a new assignee
+    if request.method == 'POST':
+        assignee_id = request.POST.get('assignee')
+        if assignee_id:
+            item.assigned_to_id = int(assignee_id)
+        else:
+            item.assigned_to_id = None # Allows you to un-assign a task
+        item.save()
+        messages.success(request, "Task assignment updated!")
+        return redirect('item_detail', item_id=item.id)
+
+    context = {
+        'item': item,
+        'comments': comments,
+        'valid_assignees': valid_assignees,
+    }
+    return render(request, 'taskStatus/item_detail.html', context)
+
+
+@login_required
+def delete_project(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    
+    # Security: Only the owner can delete the project
+    if request.user.id != project.owner_id:
+        messages.error(request, "Only the project owner can delete this project.")
+        return redirect('project_board', project_id=project.id)
+        
+    if request.method == 'POST':
+        project.delete()
+        messages.success(request, "Project successfully deleted.")
+        return redirect('project_list') # Bounce back to the main dashboard
+        
+    return redirect('project_board', project_id=project.id)
+
+
+@login_required
+def delete_item(request, item_id):
+    item = get_object_or_404(BacklogItem, id=item_id)
+    project_id = item.project.id
+    
+    if request.method == 'POST':
+        item.delete()
+        messages.success(request, "Task successfully deleted.")
+        
+    return redirect('project_board', project_id=project_id)

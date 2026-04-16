@@ -10,4 +10,8 @@ urlpatterns = [
     path('sprint/<int:sprint_id>/close/', views.close_sprint, name='close_sprint'),
     path('item/<int:item_id>/move/<str:new_status>/', views.update_item_status, name='update_item_status'),
     path('item/<int:item_id>/priority/<str:new_priority>/', views.update_item_priority, name='update_item_priority'),
+    path('project/<int:project_id>/invite/', views.invite_collaborator, name='invite_collaborator'),
+    path('item/<int:item_id>/', views.item_detail, name='item_detail'),
+    path('project/<int:project_id>/delete/', views.delete_project, name='delete_project'),
+    path('item/<int:item_id>/delete/', views.delete_item, name='delete_item'),
 ]
