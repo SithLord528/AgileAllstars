@@ -191,29 +191,38 @@ def item_detail(request, item_id):
     item = get_object_or_404(BacklogItem, id=item_id)
     project = item.project
     
-    # 1. Get all the transition comments for this specific item
+    # 1. Get all the transition comments
     comments = item.transition_comments.all()
 
-    # 2. Gather the allowed assignees (the project owner + any invited collaborators)
-    valid_assignees = list(project.collaborators)
+    # 2. Gather the allowed assignees
+    valid_assignees = list(project.collaborators.all())
     if project.owner and project.owner not in valid_assignees:
         valid_assignees.insert(0, project.owner)
 
-    # 3. Handle the form submission when you pick a new assignee
+    # 3. Handle the form submission (NOW HANDLES BOTH ASSIGNEE AND PRIORITY)
     if request.method == 'POST':
+        # Update Assignee
         assignee_id = request.POST.get('assignee')
         if assignee_id:
             item.assigned_to_id = int(assignee_id)
         else:
-            item.assigned_to_id = None # Allows you to un-assign a task
+            item.assigned_to_id = None 
+            
+        # Update Priority
+        new_priority = request.POST.get('priority')
+        valid_priorities = [p[0] for p in BacklogItem.Priority.choices]
+        if new_priority in valid_priorities:
+            item.priority = new_priority
+
         item.save()
-        messages.success(request, "Task assignment updated!")
+        messages.success(request, "Task details updated!")
         return redirect('item_detail', item_id=item.id)
 
     context = {
         'item': item,
         'comments': comments,
         'valid_assignees': valid_assignees,
+        'priority_choices': BacklogItem.Priority.choices, # Send choices to the dropdown
     }
     return render(request, 'taskStatus/item_detail.html', context)
 
