@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import Count, Q
+from django.contrib.auth.models import User
 
 
 class Project(models.Model):
@@ -45,6 +46,13 @@ class Project(models.Model):
         if total == 0:
             return 0
         return round(counts.get('DONE', 0) / total * 100, 1)
+
+    collaborators = models.ManyToManyField(
+        User, 
+        related_name='shared_projects', 
+        blank=True,
+        help_text="Users invited to work on this project"
+    )
 
 
 class Sprint(models.Model):
@@ -185,5 +193,37 @@ class BacklogItem(models.Model):
         from django.contrib.auth.models import User
         try:
             return User.objects.using('default').get(pk=self.created_by_id)
+        except User.DoesNotExist:
+            return None
+
+
+class StageComment(models.Model):
+    """Tracks comments left when an item transitions between stages."""
+    
+    item = models.ForeignKey(
+        BacklogItem, 
+        on_delete=models.CASCADE, 
+        related_name='transition_comments'
+    )
+    author_id = models.IntegerField(
+        help_text="References auth.User.id in the auth database"
+    )
+    
+    # Track exactly where it moved from and to
+    from_stage = models.CharField(max_length=10, choices=BacklogItem.Status.choices)
+    to_stage = models.CharField(max_length=10, choices=BacklogItem.Status.choices)
+    
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at'] # Shows newest comments first
+
+    @property
+    def author(self):
+        """Resolve the author User from the auth database."""
+        from django.contrib.auth.models import User
+        try:
+            return User.objects.using('default').get(pk=self.author_id)
         except User.DoesNotExist:
             return None
