@@ -9,7 +9,7 @@ class UsersConfig(AppConfig):
     def ready(self):
         from django.conf import settings
 
-        if 'migrate' in sys.argv or 'makemigrations' in sys.argv:
+        if any(cmd in sys.argv for cmd in ('migrate', 'makemigrations', 'test')):
             return
 
         db_path = settings.DATABASES['default']['NAME']

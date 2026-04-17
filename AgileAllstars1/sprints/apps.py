@@ -8,7 +8,7 @@ class SprintsConfig(AppConfig):
     name = 'sprints'
 
     def ready(self):
-        if 'migrate' in sys.argv or 'makemigrations' in sys.argv:
+        if any(cmd in sys.argv for cmd in ('migrate', 'makemigrations', 'test')):
             return
 
         from django.conf import settings

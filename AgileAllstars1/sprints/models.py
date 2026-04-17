@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 class Project(models.Model):
     """Top-level container that groups sprints and backlog items."""
 
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
     description = models.TextField(blank=True)
     owner_id = models.IntegerField(
         help_text="References auth.User.id in the auth database"
@@ -170,6 +170,8 @@ class BacklogItem(models.Model):
     created_by_id = models.IntegerField(
         help_text="References auth.User.id in the auth database"
     )
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

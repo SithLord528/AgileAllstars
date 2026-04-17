@@ -33,13 +33,103 @@ The PDMS will allow software development teams to add tasks to the product backl
 **8. Audit and History Tracking** - The system will maintain a history of all issue changes, including status updates, assignments, and comments. This provides traceability and supports accountability.
 
 ## Tech Stack:
-* Python (version) - Some words about implementation
-* Django (version) - Words
-* Additional Libraries (version) - Words
+* **Python 3.11+** - Core language. Developed and tested on 3.14; CI runs against 3.11, 3.12, and 3.13.
+* **Django 6.0** - Web framework handling views, forms, ORM, authentication, and the admin. We use two SQLite databases with a custom router (`AgileDBRouter`) to keep auth data separate from project/sprint data.
+* **SQLite** - Two database files: `agile_auth.sqlite3` (users, sessions) and `agile_projects.sqlite3` (projects, sprints, backlog items, comments). No extra DB server needed.
+* **Django Cache Framework** - Used with `LocMemCache` to track failed login attempts and enforce account lockout after 5 failures.
+* **GitHub Actions** - CI pipeline auto-runs the full test suite on every push and pull request (see `.github/workflows/django-tests.yml`).
 
 ## Development Environment:
-* Instructions to build & run for windows
 
-* Instructions to build & run for Mac
+### Windows
+1. Make sure you have **Python 3.11+** installed. Grab it from [python.org](https://www.python.org/downloads/) if you don't.
+2. Open a terminal (PowerShell or Command Prompt) and clone the repo:
+   ```
+   git clone https://github.com/<your-org>/AgileAllstars.git
+   cd AgileAllstars/AgileAllstars1
+   ```
+3. Create a virtual environment and activate it:
+   ```
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+4. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+5. Run migrations for both databases:
+   ```
+   python manage.py migrate --database=default
+   python manage.py migrate --database=projects
+   ```
+6. Start the dev server:
+   ```
+   python manage.py runserver
+   ```
+7. Open your browser to `http://127.0.0.1:8000/` — register a new account and you're in.
+8. To run the test suite:
+   ```
+   python manage.py test tests --settings=AgileAllstars.test_settings --verbosity=2
+   ```
 
-* Instructions to build & run for Linux?
+### Mac
+1. Make sure you have **Python 3.11+** installed. You can use [Homebrew](https://brew.sh/): `brew install python`
+2. Clone the repo and cd into the project:
+   ```
+   git clone https://github.com/<your-org>/AgileAllstars.git
+   cd AgileAllstars/AgileAllstars1
+   ```
+3. Create a virtual environment and activate it:
+   ```
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+4. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+5. Run migrations for both databases:
+   ```
+   python3 manage.py migrate --database=default
+   python3 manage.py migrate --database=projects
+   ```
+6. Start the dev server:
+   ```
+   python3 manage.py runserver
+   ```
+7. Open your browser to `http://127.0.0.1:8000/` — register a new account and you're in.
+8. To run the test suite:
+   ```
+   python3 manage.py test tests --settings=AgileAllstars.test_settings --verbosity=2
+   ```
+
+### Linux
+1. Make sure you have **Python 3.11+** installed. Most distros have it or you can get it via your package manager (e.g. `sudo apt install python3 python3-venv python3-pip`).
+2. Clone the repo and cd into the project:
+   ```
+   git clone https://github.com/<your-org>/AgileAllstars.git
+   cd AgileAllstars/AgileAllstars1
+   ```
+3. Create a virtual environment and activate it:
+   ```
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+4. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+5. Run migrations for both databases:
+   ```
+   python3 manage.py migrate --database=default
+   python3 manage.py migrate --database=projects
+   ```
+6. Start the dev server:
+   ```
+   python3 manage.py runserver
+   ```
+7. Open your browser to `http://127.0.0.1:8000/` — register a new account and you're in.
+8. To run the test suite:
+   ```
+   python3 manage.py test tests --settings=AgileAllstars.test_settings --verbosity=2
+   ```

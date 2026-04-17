@@ -2,41 +2,57 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from .forms import LoginForm, RegisterForm
+
+LOCKOUT_THRESHOLD = 5
+LOCKOUT_DURATION = 900  # 15 minutes
+
 
 def sign_in(request):
 
     if request.method == 'GET':
         if request.user.is_authenticated:
             return redirect('project_list')
-        
+
         form = LoginForm()
-        return render(request,'users/login.html', {'form': form})
-    
+        return render(request, 'users/login.html', {'form': form})
+
     elif request.method == 'POST':
         form = LoginForm(request.POST)
-        
+
         if form.is_valid():
             username = form.cleaned_data['username']
-            password=form.cleaned_data['password']
-            user = authenticate(request,username=username,password=password)
-            if user:
-                login(request, user)
-                messages.success(request,f'Hi {username.title()}, welcome back!')
-                return redirect('project_list')
-        
-        # either form not valid or user is not authenticated
-        messages.error(request,f'Invalid username or password')
-        return render(request,'users/login.html',{'form': form})
+            password = form.cleaned_data['password']
 
-    
-        
+            cache_key = f'login_attempts_{username}'
+            attempts = cache.get(cache_key, 0)
+
+            if attempts >= LOCKOUT_THRESHOLD:
+                messages.error(
+                    request,
+                    'Too many failed attempts. Try again in 15 minutes.',
+                )
+                return render(request, 'users/login.html', {'form': form})
+
+            user = authenticate(request, username=username, password=password)
+            if user:
+                cache.delete(cache_key)
+                login(request, user)
+                messages.success(request, f'Hi {username.title()}, welcome back!')
+                return redirect('project_list')
+
+            cache.set(cache_key, attempts + 1, LOCKOUT_DURATION)
+
+        messages.error(request, f'Invalid username or password')
+        return render(request, 'users/login.html', {'form': form})
+
+
 @login_required
 def sign_out(request):
     logout(request)
-    messages.success(request,f'You have been logged out.')
-    return redirect('login')        
-
+    messages.success(request, f'You have been logged out.')
+    return redirect('login')
 
 
 def sign_up(request):
@@ -50,11 +66,11 @@ def sign_up(request):
         if form.is_valid():
             try:
                 form.save()
-                messages.success(request,f'Registration successful. Please log in.')
+                messages.success(request, f'Registration successful. Please log in.')
                 return redirect('login')
             except Exception as e:
-                messages.error(request,f'An error occurred during registration. Please try again.')
+                messages.error(request, f'An error occurred during registration. Please try again.')
                 return render(request, 'users/register.html', { 'form': form})
 
-        messages.error(request,f'Please correct the errors below.')
+        messages.error(request, f'Please correct the errors below.')
         return render(request, 'users/register.html', { 'form': form})

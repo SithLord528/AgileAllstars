@@ -20,21 +20,40 @@
 
         <hr style="border: 0; border-top: 1px solid #dfe1e6; margin: 30px 0;">
 
-        <h3 style="color: #172b4d; margin-bottom: 15px;">Stage Change History</h3>
-        
+        <h3 style="color: #172b4d; margin-bottom: 15px;">Comments</h3>
+
+        <form method="POST" style="margin-bottom: 25px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_comment">
+            <textarea name="comment_body" rows="3" placeholder="Add a comment..." style="width: 100%; padding: 10px; border: 1px solid #dfe1e6; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; font-family: inherit;"></textarea>
+            <button type="submit" style="background-color: #0052cc; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold;">Add Comment</button>
+        </form>
+
         {% for comment in comments %}
             <div style="background: #f4f5f7; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
                 <div style="font-size: 0.85rem; color: #5e6c84; margin-bottom: 8px;">
-                    <strong>{% if comment.author %}{{ comment.author.username }}{% else %}Unknown User{% endif %}</strong> 
-                    moved from <em>{{ comment.get_from_stage_display }}</em> to <em>{{ comment.get_to_stage_display }}</em>
+                    <strong>{% if comment.author %}{{ comment.author.username }}{% else %}Unknown User{% endif %}</strong>
+                    {% if comment.from_stage != comment.to_stage %}
+                        moved from <em>{{ comment.get_from_stage_display }}</em> to <em>{{ comment.get_to_stage_display }}</em>
+                    {% else %}
+                        commented
+                    {% endif %}
                     <span style="float: right;">{{ comment.created_at|date:"M d, Y g:i a" }}</span>
                 </div>
                 <div style="color: #172b4d;">
                     {{ comment.body }}
                 </div>
+                {% if comment.author_id == request.user.id %}
+                <div style="margin-top: 10px; font-size: 0.85rem;">
+                    <form method="POST" action="{% url 'delete_comment' comment.id %}" style="display: inline;" onsubmit="return confirm('Delete this comment?');">
+                        {% csrf_token %}
+                        <button type="submit" style="background: none; border: none; color: #de350b; cursor: pointer; font-size: 0.85rem; padding: 0;">Delete</button>
+                    </form>
+                </div>
+                {% endif %}
             </div>
         {% empty %}
-            <p style="color: #6b778c; font-style: italic;">No stage change comments yet.</p>
+            <p style="color: #6b778c; font-style: italic;">No comments yet.</p>
         {% endfor %}
     </div>
 
@@ -43,13 +62,20 @@
         
         {% if messages %}
             {% for message in messages %}
-                <div style="color: #008da6; font-size: 0.85rem; font-weight: bold; margin-bottom: 15px;">{{ message }}</div>
+                <div style="color: {% if message.tags == 'error' %}#de350b{% else %}#008da6{% endif %}; font-size: 0.85rem; font-weight: bold; margin-bottom: 15px;">{{ message }}</div>
             {% endfor %}
         {% endif %}
 
         <form method="POST" style="margin-bottom: 20px;">
             {% csrf_token %}
-            
+            <input type="hidden" name="action" value="update_details">
+
+            <strong style="display: block; color: #5e6c84; font-size: 0.85rem; margin-bottom: 5px;">Title:</strong>
+            <input type="text" name="title" value="{{ item.title }}" style="width: 100%; padding: 8px; border: 1px solid #dfe1e6; border-radius: 4px; margin-bottom: 15px; box-sizing: border-box; font-family: inherit;">
+
+            <strong style="display: block; color: #5e6c84; font-size: 0.85rem; margin-bottom: 5px;">Description:</strong>
+            <textarea name="description" rows="3" style="width: 100%; padding: 8px; border: 1px solid #dfe1e6; border-radius: 4px; margin-bottom: 15px; box-sizing: border-box; font-family: inherit;">{{ item.description }}</textarea>
+
             <strong style="display: block; color: #5e6c84; font-size: 0.85rem; margin-bottom: 5px;">Priority:</strong>
             <select name="priority" style="width: 100%; padding: 8px; border: 1px solid #dfe1e6; border-radius: 4px; margin-bottom: 15px; font-family: inherit;">
                 {% for value, label in priority_choices %}
