@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width: 600px; margin: 40px auto; background: white; padding: 30px; border-radius: 8px;">
+    <h2>Edit Comment</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <textarea name="body" rows="4" style="width: 100%; padding: 10px; margin-bottom: 15px;">{{ comment.body }}</textarea>
+        <button type="submit" style="background-color: #0052cc; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Save Changes</button>
+        <a href="{% url 'item_detail' comment.item.id %}" style="margin-left: 10px; text-decoration: none; color: #6b778c;">Cancel</a>
+    </form>
+</div>
+{% endblock %}
