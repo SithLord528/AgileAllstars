@@ -36,7 +36,16 @@
         display: flex; align-items: center; gap: 12px; flex: 1;
     }
     .sprint-active strong { color: #172b4d; }
-    .sprint-goal { color: #5e6c84; font-size: 0.9rem; }
+    .sprint-goal { color: #5e6c84; font-size: 0.9rem; margin-right: 10px; }
+    
+    /* NEW: Edit Sprint Button Style */
+    .btn-edit-sprint {
+        text-decoration: none; background: #ebecf0; color: #42526e; 
+        padding: 6px 12px; border-radius: 3px; font-size: 0.8rem; 
+        font-weight: bold; border: 1px solid #dfe1e6; cursor: pointer;
+    }
+    .btn-edit-sprint:hover { background: #dfe1e6; }
+
     .planning-sprints { font-size: 0.9rem; }
     .sprint-chip {
         display: inline-flex; align-items: center; gap: 6px;
@@ -128,6 +137,16 @@
     .empty-text {
         color: #6b778c; font-size: 0.9rem; font-style: italic;
     }
+
+    /* NEW: Modal styles */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 2000;
+    }
+    .modal-content {
+        background: white; padding: 30px; border-radius: 8px; width: 100%; max-width: 500px;
+    }
+    .modal-actions { text-align: right; margin-top: 20px; }
 </style>
 {% endblock %}
 
@@ -153,6 +172,9 @@
     <div class="sprint-active">
         <strong>{{ active_sprint.name }}</strong>
         {% if active_sprint.goal %}<span class="sprint-goal">{{ active_sprint.goal }}</span>{% endif %}
+        
+        <button type="button" onclick="toggleSprintEditModal()" class="btn-edit-sprint">Edit Sprint</button>
+
         <div class="progress-container" style="max-width:160px;">
             <div class="progress-bar" style="width: {{ sprint_completion }}%"></div>
         </div>
@@ -206,24 +228,12 @@
 
     <div class="form-container" style="flex: 1; margin-bottom: 0;">
         <h2>Invite Collaborator</h2>
-        
-        {% if messages %}
-            <div style="margin-bottom: 15px; font-size: 0.9rem;">
-                {% for message in messages %}
-                    <span style="color: {% if message.tags == 'error' %}#de350b{% else %}#008da6{% endif %}; font-weight: bold;">
-                        {{ message }}
-                    </span>
-                {% endfor %}
-            </div>
-        {% endif %}
-
         <form method="POST" action="{% url 'invite_collaborator' project.id %}">
             {% csrf_token %}
             <input type="email" name="email" placeholder="colleague@example.com" required style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #dfe1e6; border-radius: 4px; box-sizing: border-box; font-family: inherit;">
             <button type="submit" class="submit-btn">Send Invite</button>
         </form>
     </div>
-
 </div>
 
 <div class="board">
@@ -233,20 +243,16 @@
         {% for item in backlog_items %}
         <div class="task-card">
             <span class="priority priority-{{ item.priority }}">{{ item.get_priority_display }}</span>
-            
             <a href="{% url 'item_detail' item.id %}" style="display: block; color: #172b4d; text-decoration: none; margin-bottom: 4px; font-weight: bold;">
                 {{ item.title }}
             </a>
-            
             {% if item.assigned_to %}
                 <div style="font-size: 0.75rem; background: #dfe1e6; color: #172b4d; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-bottom: 4px;">
                     👤 {{ item.assigned_to.username }}
                 </div>
             {% endif %}
-
             {% if item.description %}<p class="desc">{{ item.description|truncatewords:15 }}</p>{% endif %}
             <small>Created: {{ item.created_at|date:"M d" }}</small>
-            
             {% if active_sprint %}
             <div class="actions">
                 <a href="{% url 'update_item_status' item.id 'SPRINT' %}" class="action-link forward" style="text-decoration: none;">Move to Sprint &rarr;</a>
@@ -265,20 +271,16 @@
         {% for item in sprint_items %}
         <div class="task-card">
             <span class="priority priority-{{ item.priority }}">{{ item.get_priority_display }}</span>
-            
             <a href="{% url 'item_detail' item.id %}" style="display: block; color: #172b4d; text-decoration: none; margin-bottom: 4px; font-weight: bold;">
                 {{ item.title }}
             </a>
-            
             {% if item.assigned_to %}
                 <div style="font-size: 0.75rem; background: #dfe1e6; color: #172b4d; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-bottom: 4px;">
                     👤 {{ item.assigned_to.username }}
                 </div>
             {% endif %}
-
             {% if item.description %}<p class="desc">{{ item.description|truncatewords:15 }}</p>{% endif %}
             <small>Updated: {{ item.updated_at|date:"M d" }}</small>
-            
             <div class="actions split">
                 <a href="{% url 'update_item_status' item.id 'BACKLOG' %}" class="action-link back" style="text-decoration: none;">&larr; Backlog</a>
                 <a href="{% url 'update_item_status' item.id 'TEST' %}" class="action-link forward" style="text-decoration: none;">Ready for Test &rarr;</a>
@@ -294,20 +296,17 @@
         {% for item in test_items %}
         <div class="task-card">
             <span class="priority priority-{{ item.priority }}">{{ item.get_priority_display }}</span>
-            
             <a href="{% url 'item_detail' item.id %}" style="display: block; color: #172b4d; text-decoration: none; margin-bottom: 4px; font-weight: bold;">
                 {{ item.title }}
             </a>
-            
             {% if item.assigned_to %}
                 <div style="font-size: 0.75rem; background: #dfe1e6; color: #172b4d; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-bottom: 4px;">
                     👤 {{ item.assigned_to.username }}
                 </div>
             {% endif %}
-
             <div class="actions split">
                 <a href="{% url 'update_item_status' item.id 'SPRINT' %}" class="action-link fail" style="text-decoration: none;">&larr; Fail</a>
-                <a href="{% url 'update_item_status' item.id 'DONE' %}" class="action-link pass" style="text-decoration: none;">Pass &#10003;</a>
+                <a href="{% url 'update_item_status' item.id 'DONE' %}" class="action-link pass" style="text-decoration: none;">Pass ✔</a>
             </div>
         </div>
         {% empty %}
@@ -320,17 +319,14 @@
         {% for item in complete_items %}
         <div class="task-card done">
             <span class="priority priority-{{ item.priority }}">{{ item.get_priority_display }}</span>
-            
             <a href="{% url 'item_detail' item.id %}" style="display: block; color: #172b4d; text-decoration: none; margin-bottom: 4px; font-weight: bold;">
                 {{ item.title }}
             </a>
-            
             {% if item.assigned_to %}
                 <div style="font-size: 0.75rem; background: #dfe1e6; color: #172b4d; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-bottom: 4px;">
                     👤 {{ item.assigned_to.username }}
                 </div>
             {% endif %}
-
             <small>Ready for release</small>
         </div>
         {% empty %}
@@ -339,5 +335,45 @@
     </div>
 
 </div>
+
+{% if active_sprint %}
+<div id="sprintEditModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 style="margin-top:0; color:#172b4d;">Edit Sprint Details</h3>
+        <form action="{% url 'edit_sprint' active_sprint.id %}" method="POST">
+            {% csrf_token %}
+            <div class="form-group" style="margin-bottom:15px;">
+                <label style="font-weight:bold; font-size:0.9rem;">Sprint Name:</label>
+                <input type="text" name="name" value="{{ active_sprint.name }}" style="width:100%; padding:8px; border:1px solid #dfe1e6; border-radius:4px; margin-top:5px;">
+            </div>
+            <div class="form-group" style="margin-bottom:15px;">
+                <label style="font-weight:bold; font-size:0.9rem;">Goal:</label>
+                <input type="text" name="goal" value="{{ active_sprint.goal }}" style="width:100%; padding:8px; border:1px solid #dfe1e6; border-radius:4px; margin-top:5px;">
+            </div>
+            <div class="form-group" style="margin-bottom:15px;">
+                <label style="font-weight:bold; font-size:0.9rem;">Start Date:</label>
+                <input type="date" name="start_date" value="{{ active_sprint.start_date|date:'Y-m-d' }}" style="width:100%; padding:8px; border:1px solid #dfe1e6; border-radius:4px; margin-top:5px;">
+            </div>
+            <div class="form-group" style="margin-bottom:15px;">
+                <label style="font-weight:bold; font-size:0.9rem;">End Date:</label>
+                <input type="date" name="end_date" value="{{ active_sprint.end_date|date:'Y-m-d' }}" style="width:100%; padding:8px; border:1px solid #dfe1e6; border-radius:4px; margin-top:5px;">
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="toggleSprintEditModal()" class="btn-secondary">Cancel</button>
+                <button type="submit" class="btn">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    function toggleSprintEditModal() {
+        var modal = document.getElementById('sprintEditModal');
+        if (modal) {
+            modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+        }
+    }
+</script>
 
 {% endblock %}

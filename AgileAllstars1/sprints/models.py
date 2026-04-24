@@ -106,6 +106,11 @@ class Sprint(models.Model):
         if total == 0:
             return 0
         return round(counts.get('DONE', 0) / total * 100, 1)
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['project', 'name'], name='unique_sprint_name_per_project')
+        ]
 
 
 class BacklogItem(models.Model):
@@ -204,6 +209,11 @@ class BacklogItem(models.Model):
             return User.objects.using('default').get(pk=self.created_by_id)
         except User.DoesNotExist:
             return None
+        
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['project', 'title'], name='unique_task_title_per_project')
+        ]
 
 
 class StageComment(models.Model):
