@@ -3,6 +3,9 @@ LiveServerTestCase - End-to-End HTTP Tests
 
 Spins up an actual HTTP server and hits pages to make sure
 everything is wired up and reachable.
+
+NOTE: The status transition URL changed from /item/<id>/move/<status>/
+to /item/<id>/status/<status>/.
 """
 
 import urllib.request
@@ -115,15 +118,16 @@ class LiveServerAuthenticatedTests(LiveServerTestCase):
         item = BacklogItem.objects.get(title='Live Item')
         self.assertEqual(item.status, 'BACKLOG')
 
-        # 5. Move it through the board: BACKLOG -> SPRINT -> TEST -> DONE
-        self.client.post(f'/item/{item.id}/move/SPRINT/', {'comment': ''})
+        # 5. Move it through the board
+        # URL changed from /move/ to /status/
+        self.client.post(f'/item/{item.id}/status/SPRINT/', {'comment': ''})
         item.refresh_from_db()
         self.assertEqual(item.status, 'SPRINT')
 
-        self.client.post(f'/item/{item.id}/move/TEST/', {'comment': 'Ready'})
+        self.client.post(f'/item/{item.id}/status/TEST/', {'comment': 'Ready'})
         item.refresh_from_db()
         self.assertEqual(item.status, 'TEST')
 
-        self.client.post(f'/item/{item.id}/move/DONE/', {'comment': 'Passed'})
+        self.client.post(f'/item/{item.id}/status/DONE/', {'comment': 'Passed'})
         item.refresh_from_db()
         self.assertEqual(item.status, 'DONE')

@@ -22,10 +22,8 @@ class CreateProjectTests(MultiDBTestCase):
             {'name': 'E-Commerce Platform', 'description': 'Online shop'},
         )
         project = Project.objects.get(name='E-Commerce Platform')
-        self.assertRedirects(
-            response,
-            reverse('project_board', kwargs={'project_id': project.id}),
-        )
+        # After creation the view redirects back to the project list
+        self.assertRedirects(response, reverse('project_list'))
         self.assertEqual(project.owner_id, self.pm_user.id)
 
     # -- F2-002: Create a bunch of projects back to back --
@@ -43,7 +41,7 @@ class CreateProjectTests(MultiDBTestCase):
 
     # -- F2-003: Try to create a project with no name --
     def test_F2_003_empty_name_rejected(self):
-        """Blank name — form should reject it, nothing saved."""
+        """Blank name — form is invalid so it re-renders the page (200)."""
         self.login_as_pm()
         response = self.client.post(
             reverse('project_list'), {'name': '', 'description': ''}
@@ -53,7 +51,8 @@ class CreateProjectTests(MultiDBTestCase):
 
     # -- F2-004: Try to create a project with a name that already exists --
     def test_F2_004_duplicate_name_rejected(self):
-        """Should get rejected because we added unique=True on Project.name."""
+        """Django's ModelForm catches the unique violation at validation
+        time, so the form re-renders with an error (200)."""
         self.login_as_pm()
         self.client.post(
             reverse('project_list'),

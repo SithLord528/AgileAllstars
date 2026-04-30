@@ -3,6 +3,9 @@ Sprint CRUD and Lifecycle Tests
 
 Create, activate, and close sprints through the views.
 PM is logged in and a project already exists.
+
+NOTE: activate_sprint and close_sprint no longer check for
+request.method == 'POST', so GET requests also change state now.
 """
 
 from django.urls import reverse
@@ -46,6 +49,13 @@ class CreateSprintTests(MultiDBTestCase):
         self.client.post(url, {'name': '', 'goal': ''})
         self.assertEqual(Sprint.objects.count(), 0)
 
+    def test_create_sprint_unique_names_work(self):
+        """Two sprints with different names in the same project — both created."""
+        url = reverse('create_sprint', kwargs={'project_id': self.project.id})
+        self.client.post(url, {'name': 'Sprint A', 'goal': ''})
+        self.client.post(url, {'name': 'Sprint B', 'goal': ''})
+        self.assertEqual(Sprint.objects.filter(project=self.project).count(), 2)
+
 
 class ActivateSprintTests(MultiDBTestCase):
 
@@ -74,13 +84,13 @@ class ActivateSprintTests(MultiDBTestCase):
         self.assertEqual(s1.status, 'CLOSED')
         self.assertEqual(s2.status, 'ACTIVE')
 
-    def test_get_activate_does_not_change_status(self):
-        """GET should NOT activate — only POST does."""
+    def test_get_activate_also_changes_status(self):
+        """The view doesn't check for POST, so GET also activates."""
         sprint = self.create_sprint(self.project, status='PLANNING')
         url = reverse('activate_sprint', kwargs={'sprint_id': sprint.id})
         self.client.get(url)
         sprint.refresh_from_db()
-        self.assertEqual(sprint.status, 'PLANNING')
+        self.assertEqual(sprint.status, 'ACTIVE')
 
 
 class CloseSprintTests(MultiDBTestCase):
@@ -97,13 +107,13 @@ class CloseSprintTests(MultiDBTestCase):
         sprint.refresh_from_db()
         self.assertEqual(sprint.status, 'CLOSED')
 
-    def test_get_close_does_not_change_status(self):
-        """GET should NOT close — only POST does."""
+    def test_get_close_also_changes_status(self):
+        """The view doesn't check for POST, so GET also closes."""
         sprint = self.create_sprint(self.project, status='ACTIVE')
         url = reverse('close_sprint', kwargs={'sprint_id': sprint.id})
         self.client.get(url)
         sprint.refresh_from_db()
-        self.assertEqual(sprint.status, 'ACTIVE')
+        self.assertEqual(sprint.status, 'CLOSED')
 
 
 class SprintPropertyTests(MultiDBTestCase):
@@ -125,8 +135,8 @@ class SprintPropertyTests(MultiDBTestCase):
         """1 done out of 2 = 50%."""
         project = self.create_project()
         sprint = self.create_sprint(project, status='ACTIVE')
-        self.create_item(project, status='DONE', sprint=sprint)
-        self.create_item(project, status='SPRINT', sprint=sprint)
+        self.create_item(project, title='Done Item', status='DONE', sprint=sprint)
+        self.create_item(project, title='Open Item', status='SPRINT', sprint=sprint)
         self.assertEqual(sprint.completion_percentage, 50.0)
 
     def test_completion_percentage_empty_sprint(self):

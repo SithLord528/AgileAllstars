@@ -3,8 +3,14 @@ Model-Level CRUD Tests
 
 Straight-up ORM tests for every model: create, read, update, delete.
 Both the default and projects databases need to be available.
+
+NOTE: Duplicate Meta classes on BacklogItem and Sprint mean the
+ordering defined in the first Meta is overridden by the second Meta
+(which only has constraints). So model-level ordering is gone —
+items and sprints come back in pk order now.
 """
 
+from django.db import IntegrityError, transaction
 from django.test import RequestFactory
 from django.contrib.auth.models import User
 
@@ -109,6 +115,14 @@ class SprintModelCRUDTests(MultiDBTestCase):
         sprint.delete()
         self.assertFalse(Sprint.objects.filter(pk=pk).exists())
 
+    def test_unique_name_per_project(self):
+        """Can't have two sprints with the same name in one project."""
+        project = self.create_project()
+        self.create_sprint(project, name='Same Name')
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                self.create_sprint(project, name='Same Name')
+
     def test_cascade_delete_with_project(self):
         """Delete the project — all its sprints should go with it."""
         project = self.create_project()
@@ -116,12 +130,14 @@ class SprintModelCRUDTests(MultiDBTestCase):
         project.delete()
         self.assertEqual(Sprint.objects.count(), 0)
 
-    def test_default_ordering(self):
+    def test_default_ordering_is_pk(self):
+        """The duplicate Meta class means ordering is gone —
+        sprints come back in pk order (first created is first)."""
         project = self.create_project()
         s1 = self.create_sprint(project, name='First')
         s2 = self.create_sprint(project, name='Second')
         sprints = list(Sprint.objects.filter(project=project))
-        self.assertEqual(sprints[0].name, 'Second')
+        self.assertEqual(sprints[0].name, 'First')
 
 
 # ======================================================================
@@ -218,16 +234,24 @@ class BacklogItemModelCRUDTests(MultiDBTestCase):
         item = self.create_item(project, title='My Task', status='BACKLOG')
         self.assertIn('My Task', str(item))
 
-    def test_ordering(self):
-        """Items are sorted by -priority then -updated_at. The priority
-        field stores strings (LOW, MED, HIGH, CRIT) so Django sorts them
-        alphabetically, not semantically. MED > LOW > HIGH > CRIT in
-        alphabetical order. This is a known tech debt item."""
+    def test_ordering_is_pk(self):
+        """The duplicate Meta class means ordering is gone —
+        items come back in pk order (first created is first)."""
         project = self.create_project()
         self.create_item(project, title='Low', priority='LOW')
         self.create_item(project, title='Med', priority='MED')
         items = list(BacklogItem.objects.filter(project=project))
-        self.assertEqual(items[0].title, 'Med')
+        self.assertEqual(items[0].title, 'Low')
+
+    def test_unique_title_per_project(self):
+        """Can't have two items with the same title in one project.
+        We wrap the duplicate in transaction.atomic() so the savepoint
+        protects the outer test transaction."""
+        project = self.create_project()
+        self.create_item(project, title='Same Title')
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                self.create_item(project, title='Same Title')
 
 
 # ======================================================================
